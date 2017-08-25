@@ -6,14 +6,12 @@ import SafariServices
 
 class BraveBrowserViewController : BrowserViewController {
     fileprivate lazy var __once: () = {
-        if !PrivateBrowsing.singleton.isOn {
-            // Only do tab restoration if in normal mode.
-            //  If in PM, restoration happens on leaving.
-            _ = self.tabManager.restoreTabs
+        if self.profile.prefs.boolForKey(kPrefKeyPrivateBrowsingAlwaysOn) ?? false {
+            getApp().browserViewController.switchBrowsingMode(toPrivate: true)
+            // Auto-creates new tab
         } else {
-            _ = self.tabManager.addTabAndSelect()
+            _ = self.tabManager.restoreTabs
         }
-        
     }()
     
     var historySwiper = HistorySwiper()
@@ -33,13 +31,6 @@ class BraveBrowserViewController : BrowserViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        struct RunOnceAtStartup { static var ran = false }
-        if !RunOnceAtStartup.ran && profile.prefs.boolForKey(kPrefKeyPrivateBrowsingAlwaysOn) ?? false {
-            getApp().browserViewController.switchBrowsingMode(toPrivate: true)
-        }
-
-        RunOnceAtStartup.ran = true
-        
         // Initialize Sync without connecting. Sync webview needs to be in a "permanent" location to continue working predictably
         //  If Sync is not in the view "hierarchy" it will behavior extremely unpredictably, often just dying in the middle of a promize chain
         //  Added to keyWindow, since it can then be utilized from any VC (e.g. settings modal)
@@ -65,7 +56,6 @@ class BraveBrowserViewController : BrowserViewController {
         // TODO: Should never call setupConstraints multiple times, this can cause huge headaches. Constraints should mostly be static with adjustments made to those constraints.
         setupConstraints()
 
-        struct RunOnceAtStartup { static var token: Int = 0 }
         _ = self.__once
 
         updateTabCountUsingTabManager(tabManager, animated: false)
@@ -89,8 +79,8 @@ class BraveBrowserViewController : BrowserViewController {
 
         if let webView = selected.webView {
             webViewContainer.insertSubview(webView, at: 0)
-            webView.snp_makeConstraints { make in
-                make.top.equalTo(webViewContainerToolbar.snp_bottom)
+            webView.snp.makeConstraints { make in
+                make.top.equalTo(webViewContainerToolbar.snp.bottom)
                 make.left.right.bottom.equalTo(self.webViewContainer)
             }
 
@@ -116,10 +106,10 @@ class BraveBrowserViewController : BrowserViewController {
         super.setupConstraints()
 
         // TODO: Should be moved to parent class, but requires property moving too
-        webViewContainer.snp_remakeConstraints { make in
+        webViewContainer.snp.remakeConstraints { make in
             make.left.right.equalTo(self.view)
-            heightConstraint = make.height.equalTo(self.view.snp_height).constraint
-            webViewContainerTopOffset = make.top.equalTo(self.statusBarOverlay.snp_bottom).offset(BraveURLBarView.CurrentHeight).constraint
+            heightConstraint = make.height.equalTo(self.view.snp.height).constraint
+            webViewContainerTopOffset = make.top.equalTo(self.statusBarOverlay.snp.bottom).offset(BraveURLBarView.CurrentHeight).constraint
         }
 
     }
@@ -128,7 +118,7 @@ class BraveBrowserViewController : BrowserViewController {
         super.updateViewConstraints()
 
         // Setup the bottom toolbar
-        toolbar?.snp_remakeConstraints { make in
+        toolbar?.snp.remakeConstraints { make in
             make.edges.equalTo(self.footerBackground!)
         }
     }
@@ -136,14 +126,14 @@ class BraveBrowserViewController : BrowserViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
-        webViewContainerTopOffset?.updateOffset(amount: BraveURLBarView.CurrentHeight)
-        heightConstraint?.updateOffset(amount: -BraveApp.statusBarHeight())
+        webViewContainerTopOffset?.update(offset: BraveURLBarView.CurrentHeight)
+        heightConstraint?.update(offset: -BraveApp.statusBarHeight())
     }
     
     override func updateToolbarStateForTraitCollection(_ newCollection: UITraitCollection) {
         super.updateToolbarStateForTraitCollection(newCollection)
 
-        heightConstraint?.updateOffset(amount: -BraveApp.statusBarHeight())
+        heightConstraint?.update(offset: -BraveApp.statusBarHeight())
 
         postAsyncToMain(0) {
             self.urlBar.updateTabsBarShowing()

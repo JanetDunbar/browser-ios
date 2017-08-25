@@ -21,8 +21,8 @@ extension BrowserViewController: URLBarDelegate {
 
         addChildViewController(searchController!)
         view.addSubview(searchController!.view)
-        searchController!.view.snp_makeConstraints { make in
-            make.top.equalTo(self.header.snp_bottom)
+        searchController!.view.snp.makeConstraints { make in
+            make.top.equalTo(self.header.snp.bottom)
             make.left.right.bottom.equalTo(self.view)
             return
         }
@@ -92,7 +92,7 @@ extension BrowserViewController: URLBarDelegate {
     func urlBarDidLongPressReaderMode(_ urlBar: URLBarView) -> Bool {
         guard let tab = tabManager.selectedTab,
             let url = tab.displayURL,
-            let result = profile.readingList?.createRecordWithURL(url.absoluteString ?? "", title: tab.title ?? "", addedBy: UIDevice.current.name)
+            let result = profile.readingList?.createRecordWithURL(url.absoluteString, title: tab.title ?? "", addedBy: UIDevice.current.name)
             else {
                 UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, Strings.Could_not_add_page_to_Reading_List)
                 return false

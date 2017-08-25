@@ -78,7 +78,7 @@ class BrowserViewController: UIViewController {
     var header: BlurWrapper!
     var footer: UIView!
     var footerBackdrop: UIView!
-    var footerBackground: BlurWrapper?
+    var footerBackground: UIView?
     var topTouchArea: UIButton!
 
     // Backdrop used for displaying greyed background for private tabs
@@ -183,9 +183,18 @@ class BrowserViewController: UIViewController {
         if bottomToolbarIsHidden {
             toolbar = BraveBrowserBottomToolbar()
             toolbar?.browserToolbarDelegate = self
-            footerBackground = BlurWrapper(view: toolbar!)
+            toolbar?.drawTopBorder = false
+            
+            footerBackground = UIView()
             footerBackground?.translatesAutoresizingMaskIntoConstraints = false
+            footerBackground?.addSubview(toolbar!)
             footer.addSubview(footerBackground!)
+            
+            footer.layer.shadowOffset = CGSize(width: 0, height: -1)
+            footer.layer.shadowColor = UIConstants.BorderColor.cgColor
+            footer.layer.shadowRadius = 0
+            footer.layer.shadowOpacity = 1.0
+            footer.layer.masksToBounds = false
             
             // Since this is freshly created, theme needs to be applied
             if let currentThemeName = self.currentThemeName {
@@ -203,7 +212,7 @@ class BrowserViewController: UIViewController {
             updateURLBarDisplayURL(tab: tab)
             navigationToolbar.updateBackStatus(webView.canGoBack)
             navigationToolbar.updateForwardStatus(webView.canGoForward)
-            navigationToolbar.updateReloadStatus(tab.loading ?? false)
+            navigationToolbar.updateReloadStatus(tab.loading)
         }
     }
 
@@ -321,6 +330,12 @@ class BrowserViewController: UIViewController {
         urlBar.browserToolbarDelegate = self
         header = BlurWrapper(view: urlBar)
         view.addSubview(header)
+    
+        header.layer.shadowOffset = CGSize(width: 0, height: 1)
+        header.layer.shadowColor = UIConstants.BorderColor.cgColor
+        header.layer.shadowRadius = 0
+        header.layer.shadowOpacity = 1.0
+        header.layer.masksToBounds = false
 
         (view as! ViewToCaptureReaderModeTap).urlBarView = (urlBar as! BraveURLBarView)
  #endif
@@ -374,16 +389,16 @@ class BrowserViewController: UIViewController {
 
     func setupConstraints() {
         
-        statusBarOverlay.snp_makeConstraints { make in
+        statusBarOverlay.snp.makeConstraints { make in
             make.top.right.left.equalTo(statusBarOverlay.superview!)
             make.bottom.equalTo(topLayoutGuide.snp.bottom)
         }
         
-        header.snp_makeConstraints { make in
+        header.snp.makeConstraints { make in
             
             scrollController.headerTopConstraint = make.top.equalTo(self.topLayoutGuide.snp.bottom).constraint
             if let headerHeightConstraint = headerHeightConstraint {
-                headerHeightConstraint.updateOffset(amount: BraveURLBarView.CurrentHeight)
+                headerHeightConstraint.update(offset: BraveURLBarView.CurrentHeight)
             } else {
                 headerHeightConstraint = make.height.equalTo(BraveURLBarView.CurrentHeight).constraint
             }
@@ -397,11 +412,11 @@ class BrowserViewController: UIViewController {
         // webViewContainer constraints set in Brave subclass.
         // TODO: This should be centralized
 
-        webViewContainerBackdrop.snp_makeConstraints { make in
+        webViewContainerBackdrop.snp.makeConstraints { make in
             make.edges.equalTo(webViewContainer)
         }
 
-        webViewContainerToolbar.snp_makeConstraints { make in
+        webViewContainerToolbar.snp.makeConstraints { make in
             make.left.right.top.equalTo(webViewContainer)
             make.height.equalTo(0)
         }
@@ -532,29 +547,29 @@ class BrowserViewController: UIViewController {
     override func updateViewConstraints() {
         super.updateViewConstraints()
 
-        topTouchArea.snp_remakeConstraints { make in
+        topTouchArea.snp.remakeConstraints { make in
             make.top.left.right.equalTo(self.view)
             make.height.equalTo(BrowserViewControllerUX.ShowHeaderTapAreaHeight)
         }
 
-        readerModeBar?.snp_remakeConstraints { make in
-            make.top.equalTo(self.header.snp_bottom).constraint
+        readerModeBar?.snp.remakeConstraints { make in
+            make.top.equalTo(self.header.snp.bottom).constraint
             make.height.equalTo(BraveUX.ReaderModeBarHeight)
             make.leading.trailing.equalTo(self.view)
         }
 
-        footer.snp_remakeConstraints { make in
-            scrollController.footerBottomConstraint = make.bottom.equalTo(self.view.snp_bottom).constraint
-            make.top.equalTo(self.snackBars.snp_top)
+        footer.snp.remakeConstraints { make in
+            scrollController.footerBottomConstraint = make.bottom.equalTo(self.view.snp.bottom).constraint
+            make.top.equalTo(self.snackBars.snp.top)
             make.leading.trailing.equalTo(self.view)
         }
 
-        footerBackdrop.snp_remakeConstraints { make in
+        footerBackdrop.snp.remakeConstraints { make in
             make.edges.equalTo(self.footer)
         }
 
         updateSnackBarConstraints()
-        footerBackground?.snp_remakeConstraints { make in
+        footerBackground?.snp.remakeConstraints { make in
             make.bottom.left.right.equalTo(self.footer)
             make.height.equalTo(UIConstants.ToolbarHeight)
         }
@@ -562,23 +577,23 @@ class BrowserViewController: UIViewController {
 
         // Remake constraints even if we're already showing the home controller.
         // The home controller may change sizes if we tap the URL bar while on about:home.
-        homePanelController?.view.snp_remakeConstraints { make in
-            make.top.equalTo(self.header.snp_bottom)
+        homePanelController?.view.snp.remakeConstraints { make in
+            make.top.equalTo(self.header.snp.bottom)
             make.left.right.equalTo(self.view)
             if self.homePanelIsInline {
-                make.bottom.equalTo(self.toolbar?.snp_top ?? self.view.snp_bottom)
+                make.bottom.equalTo(self.toolbar?.snp.top ?? self.view.snp.bottom)
             } else {
-                make.bottom.equalTo(self.view.snp_bottom)
+                make.bottom.equalTo(self.view.snp.bottom)
             }
         }
 
-        findInPageContainer.snp_remakeConstraints { make in
+        findInPageContainer.snp.remakeConstraints { make in
             make.left.right.equalTo(self.view)
 
             if let keyboardHeight = keyboardState?.intersectionHeightForView(self.view), keyboardHeight > 0 {
                 make.bottom.equalTo(self.view).offset(-keyboardHeight)
             } else if let toolbar = self.toolbar {
-                make.bottom.equalTo(toolbar.snp_top)
+                make.bottom.equalTo(toolbar.snp.top)
             } else {
                 make.bottom.equalTo(self.view)
             }
@@ -813,7 +828,7 @@ class BrowserViewController: UIViewController {
             switchBrowsingMode(toPrivate: true)
         }
         
-        tabManager.addTabAndSelect(request)
+        tabManager.addAdjacentTabAndSelect(request)
     }
 
     func openBlankNewTabAndFocus(isPrivate: Bool = false) {
@@ -902,7 +917,7 @@ class BrowserViewController: UIViewController {
                 findInPageBar.delegate = self
                 findInPageContainer.addSubview(findInPageBar)
 
-                findInPageBar.snp_makeConstraints { make in
+                findInPageBar.snp.makeConstraints { make in
                     make.edges.equalTo(findInPageContainer)
                     make.height.equalTo(UIConstants.ToolbarHeight)
                 }
@@ -1034,7 +1049,7 @@ extension BrowserViewController: UIPopoverPresentationControllerDelegate {
 }
 
 extension BrowserViewController: IntroViewControllerDelegate {
-    func presentIntroViewController(_ force: Bool = false) -> Bool {
+    @discardableResult func presentIntroViewController(_ force: Bool = false) -> Bool {
         struct autoShowOnlyOnce { static var wasShownThisSession = false } // https://github.com/brave/browser-ios/issues/424
         if force || (profile.prefs.intForKey(IntroViewControllerSeenProfileKey) == nil && !autoShowOnlyOnce.wasShownThisSession) {
             autoShowOnlyOnce.wasShownThisSession = true
@@ -1160,12 +1175,10 @@ extension BrowserViewController: Themeable {
         switch(themeName) {
         case Theme.NormalMode:
             statusBarOverlay.backgroundColor = BraveUX.ToolbarsBackgroundSolidColor
-            header.blurStyle = .light
-            footerBackground?.blurStyle = .light
+            footerBackground?.backgroundColor = BraveUX.ToolbarsBackgroundSolidColor
         case Theme.PrivateMode:
             statusBarOverlay.backgroundColor = BraveUX.DarkToolbarsBackgroundSolidColor
-            header.blurStyle = .dark
-            footerBackground?.blurStyle = .dark
+            footerBackground?.backgroundColor = BraveUX.DarkToolbarsBackgroundSolidColor
         default:
             log.debug("Unknown Theme \(themeName)")
         }
@@ -1182,7 +1195,7 @@ class BlurWrapper: UIView {
             effectView.removeFromSuperview()
             effectView = newEffect
             insertSubview(effectView, belowSubview: wrappedView)
-            effectView.snp_remakeConstraints { make in
+            effectView.snp.remakeConstraints { make in
                 make.edges.equalTo(self)
             }
         }
@@ -1199,11 +1212,11 @@ class BlurWrapper: UIView {
         addSubview(effectView)
         addSubview(wrappedView)
 
-        effectView.snp_makeConstraints { make in
+        effectView.snp.makeConstraints { make in
             make.edges.equalTo(self)
         }
 
-        wrappedView.snp_makeConstraints { make in
+        wrappedView.snp.makeConstraints { make in
             make.edges.equalTo(self)
         }
     }

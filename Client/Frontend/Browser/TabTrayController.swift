@@ -63,8 +63,7 @@ class TabCell: UICollectionViewCell {
         
         self.backgroundHolder.backgroundColor = TabTrayControllerUX.CellBackgroundColor
         self.backgroundHolder.layer.cornerRadius = TabTrayControllerUX.CornerRadius
-        self.backgroundHolder.layer.borderColor = UIColor(white: 0.0, alpha: 0.15).cgColor
-        self.backgroundHolder.layer.borderWidth = 0.5
+        self.backgroundHolder.layer.borderWidth = 0
         self.backgroundHolder.layer.masksToBounds = true
 
         self.background.contentMode = UIViewContentMode.scaleAspectFill
@@ -124,42 +123,42 @@ class TabCell: UICollectionViewCell {
         
         let generalOffset = 4
         
-        shadowView.snp_remakeConstraints { make in
+        shadowView.snp.remakeConstraints { make in
             make.edges.equalTo(shadowView.superview!)
         }
         
-        backgroundHolder.snp_remakeConstraints { make in
+        backgroundHolder.snp.remakeConstraints { make in
             make.edges.equalTo(backgroundHolder.superview!)
         }
 
-        background.snp_remakeConstraints { make in
+        background.snp.remakeConstraints { make in
             make.edges.equalTo(background.superview!)
         }
 
-        favicon.snp_remakeConstraints { make in
+        favicon.snp.remakeConstraints { make in
             make.top.left.equalTo(favicon.superview!).offset(generalOffset)
-            make.size.equalTo(titleWrapper.snp_height).offset(-generalOffset * 2)
+            make.size.equalTo(titleWrapper.snp.height).offset(-generalOffset * 2)
         }
 
-        titleWrapper.snp_remakeConstraints { make in
+        titleWrapper.snp.remakeConstraints { make in
             make.left.top.equalTo(titleWrapper.superview!)
-            make.width.equalTo(titleWrapper.superview!.snp_width)
+            make.width.equalTo(titleWrapper.superview!.snp.width)
             make.height.equalTo(TabTrayControllerUX.TitleBoxHeight)
         }
         
-        titleWrapperBackground.snp_remakeConstraints { make in
+        titleWrapperBackground.snp.remakeConstraints { make in
             make.top.left.right.equalTo(titleWrapperBackground.superview!)
             make.height.equalTo(TabTrayControllerUX.TitleBoxHeight + 15)
         }
 
-        titleLbl.snp_remakeConstraints { make in
-            make.left.equalTo(favicon.snp_right).offset(generalOffset)
-            make.right.equalTo(closeButton.snp_left).offset(generalOffset)
+        titleLbl.snp.remakeConstraints { make in
+            make.left.equalTo(favicon.snp.right).offset(generalOffset)
+            make.right.equalTo(closeButton.snp.left).offset(generalOffset)
             make.top.bottom.equalTo(titleLbl.superview!)
         }
 
-        closeButton.snp_remakeConstraints { make in
-            make.size.equalTo(titleWrapper.snp_height)
+        closeButton.snp.remakeConstraints { make in
+            make.size.equalTo(titleWrapper.snp.height)
             make.centerY.equalTo(titleWrapper)
             make.right.equalTo(closeButton.superview!)
         }
@@ -181,7 +180,7 @@ class TabCell: UICollectionViewCell {
         // TODO: Move more of this to cellForItem
         // Reset any close animations.
         backgroundHolder.layer.borderColor = UIColor(white: 0.0, alpha: 0.15).cgColor
-        backgroundHolder.layer.borderWidth = 0.5
+        backgroundHolder.layer.borderWidth = 1
         shadowView.alpha = 1
         shadowView.transform = CGAffineTransform.identity
         shadowView.layer.shadowOpacity = 0
@@ -269,7 +268,7 @@ class TabTrayController: UIViewController {
         let button = UIButton()
         button.setTitle(Strings.Private, for: .normal)
         button.setTitleColor(UIColor.black, for: .normal)
-        button.titleLabel!.font = UIFont.systemFont(ofSize: button.titleLabel!.font.pointSize + 2)
+        button.titleLabel!.font = UIFont.systemFont(ofSize: button.titleLabel!.font.pointSize + 2, weight: UIFontWeightMedium)
         button.contentEdgeInsets = UIEdgeInsetsMake(0, 4 /* left */, 0, 4 /* right */)
         button.layer.cornerRadius = 4.0
         button.addTarget(self, action: #selector(TabTrayController.SELdidTogglePrivateMode), for: .touchUpInside)
@@ -390,7 +389,7 @@ class TabTrayController: UIViewController {
 
         view.insertSubview(emptyPrivateTabsView, aboveSubview: collectionView)
         emptyPrivateTabsView.alpha = privateTabsAreEmpty() ? 1 : 0
-        emptyPrivateTabsView.snp_makeConstraints { make in
+        emptyPrivateTabsView.snp.makeConstraints { make in
             make.edges.equalTo(self.view)
         }
 
@@ -428,23 +427,23 @@ class TabTrayController: UIViewController {
 
     fileprivate func makeConstraints() {
         
-        togglePrivateMode.snp_makeConstraints { make in
-            make.right.equalTo(addTabButton.snp_left).offset(-10)
-            make.centerY.equalTo(self.addTabButton.snp_centerY)
+        togglePrivateMode.snp.makeConstraints { make in
+            make.right.equalTo(addTabButton.snp.left).offset(-10)
+            make.centerY.equalTo(self.addTabButton.snp.centerY)
         }
 
-        addTabButton.snp_makeConstraints { make in
+        addTabButton.snp.makeConstraints { make in
             make.trailing.equalTo(self.view)
             make.top.equalTo(self.topLayoutGuide.snp.bottom)
             make.size.equalTo(UIConstants.ToolbarHeight)
         }
 
-        collectionView.snp_makeConstraints { make in
-            make.top.equalTo(addTabButton.snp_bottom)
+        collectionView.snp.makeConstraints { make in
+            make.top.equalTo(addTabButton.snp.bottom)
             make.left.right.bottom.equalTo(self.view)
         }
         
-        blurBackdropView.snp_makeConstraints { (make) in
+        blurBackdropView.snp.makeConstraints { (make) in
             make.edges.equalTo(view)
         }
     }
@@ -472,12 +471,12 @@ class TabTrayController: UIViewController {
         emptyView.addSubview(titleLabel)
         emptyView.addSubview(descriptionLabel)
         
-        titleLabel.snp_makeConstraints { make in
+        titleLabel.snp.makeConstraints { make in
             make.center.equalTo(emptyView)
         }
         
-        descriptionLabel.snp_makeConstraints { make in
-            make.top.equalTo(titleLabel.snp_bottom).offset(EmptyPrivateTabsViewUX.TextMargin)
+        descriptionLabel.snp.makeConstraints { make in
+            make.top.equalTo(titleLabel.snp.bottom).offset(EmptyPrivateTabsViewUX.TextMargin)
             make.centerX.equalTo(emptyView)
         }
         return emptyView
@@ -783,8 +782,8 @@ fileprivate class TabManagerDataSource: NSObject, UICollectionViewDataSource {
         // TODO: Move most view logic here instead of `init` or `prepareForReuse`
         // If the current tab add heightlighting
         if getApp().tabManager.selectedTab == tab {
+            tabCell.backgroundHolder.layer.borderColor = BraveUX.DefaultBlue.withAlphaComponent(0.75).cgColor
             tabCell.backgroundHolder.layer.borderWidth = 1
-            tabCell.backgroundHolder.layer.borderColor = BraveUX.DefaultBlue.cgColor
             tabCell.shadowView.layer.shadowRadius = 5
             tabCell.shadowView.layer.shadowColor = BraveUX.DefaultBlue.cgColor
             tabCell.shadowView.layer.shadowOpacity = 1.0
@@ -792,6 +791,12 @@ fileprivate class TabManagerDataSource: NSObject, UICollectionViewDataSource {
             tabCell.shadowView.layer.shadowPath = UIBezierPath(roundedRect: tabCell.bounds, cornerRadius: tabCell.backgroundHolder.layer.cornerRadius).cgPath
             tabCell.background.alpha = 1.0
         } else {
+            tabCell.backgroundHolder.layer.borderWidth = 0
+            tabCell.shadowView.layer.shadowRadius = 2
+            tabCell.shadowView.layer.shadowColor = UIColor(white: 0.0, alpha: 0.15).cgColor
+            tabCell.shadowView.layer.shadowOpacity = 1.0
+            tabCell.shadowView.layer.shadowOffset = CGSize(width: 0, height: 0)
+            tabCell.shadowView.layer.shadowPath = UIBezierPath(roundedRect: tabCell.bounds, cornerRadius: tabCell.backgroundHolder.layer.cornerRadius).cgPath
             tabCell.background.alpha = 0.7
         }
         

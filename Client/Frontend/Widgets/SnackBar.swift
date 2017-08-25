@@ -26,7 +26,7 @@ class SnackButton : UIButton {
      */
     lazy var highlightImg: UIImage = {
         let size = CGSize(width: 1, height: 1)
-        return UIImage.createWithColor(size, color: UIConstants.HighlightColor)
+        return UIImage.createWithColor(size, color: BraveUX.DefaultBlue.withAlphaComponent(0.2))
     }()
 
     init(title: String, accessibilityIdentifier: String, callback: @escaping (_ bar: SnackBar) -> Void) {
@@ -35,7 +35,7 @@ class SnackButton : UIButton {
         super.init(frame: CGRect.zero)
 
         setTitle(title, for: .normal)
-        titleLabel?.font = DynamicFontHelper.defaultHelper.DefaultMediumFont
+        titleLabel?.font = DynamicFontHelper.defaultHelper.DefaultStandardFontBold
         setBackgroundImage(highlightImg, for: .highlighted)
         setTitleColor(UIConstants.HighlightText, for: .highlighted)
 
@@ -94,7 +94,8 @@ class SnackBar: UIView {
         textLabel = UILabel()
         contentView = UIView()
         buttonsView = Toolbar()
-        backgroundView = UIVisualEffectView(effect: UIBlurEffect(style: UIBlurEffectStyle.extraLight))
+        backgroundView = UIView()
+        backgroundView.backgroundColor = UIColor(rgb: 0xe8e8e8)
 
         super.init(frame: CGRect.zero)
 
@@ -113,8 +114,9 @@ class SnackBar: UIView {
         textLabel = UILabel()
         contentView = UIView()
         buttonsView = Toolbar()
-        backgroundView = UIVisualEffectView(effect: UIBlurEffect(style: UIBlurEffectStyle.extraLight))
-
+        backgroundView = UIView()
+        backgroundView.backgroundColor = UIColor(rgb: 0xe8e8e8)
+        
         super.init(frame: frame)
     }
 
@@ -130,11 +132,12 @@ class SnackBar: UIView {
         self.backgroundColor = UIColor.clear
         buttonsView.drawTopBorder = true
         buttonsView.drawBottomBorder = false
-        buttonsView.drawSeperators = true
+        buttonsView.drawSeperators = false
 
         imageView.contentMode = UIViewContentMode.left
 
-        textLabel.font = DynamicFontHelper.defaultHelper.DefaultMediumFont
+        textLabel.font = DynamicFontHelper.defaultHelper.DefaultStandardFont
+        textLabel.textAlignment = .center
         textLabel.lineBreakMode = NSLineBreakMode.byWordWrapping
         textLabel.numberOfLines = 0
         textLabel.backgroundColor = UIColor.clear
@@ -156,19 +159,6 @@ class SnackBar: UIView {
         super.layoutSubviews()
     }
 
-    fileprivate func drawLine(_ context: CGContext, start: CGPoint, end: CGPoint) {
-        context.setStrokeColor(UIConstants.BorderColor.cgColor)
-        context.setLineWidth(1)
-        context.move(to: CGPoint(x: start.x, y: start.y))
-        context.addLine(to: CGPoint(x: end.x, y: end.y))
-        context.strokePath()
-    }
-
-    override func draw(_ rect: CGRect) {
-        let context = UIGraphicsGetCurrentContext()
-        drawLine(context!, start: CGPoint(x: 0, y: 1), end: CGPoint(x: frame.size.width, y: 1))
-    }
-
     /**
      * Called to check if the snackbar should be removed or not. By default, Snackbars persist forever.
      * Override this class or use a class like CountdownSnackbar if you want things expire
@@ -181,18 +171,18 @@ class SnackBar: UIView {
     override func updateConstraints() {
         super.updateConstraints()
 
-        backgroundView.snp_remakeConstraints { make in
+        backgroundView.snp.remakeConstraints { make in
             make.bottom.left.right.equalTo(self)
             // Offset it by the width of the top border line so we can see the line from the super view
             make.top.equalTo(self).offset(1)
         }
 
-        contentView.snp_remakeConstraints { make in
+        contentView.snp.remakeConstraints { make in
             make.top.left.right.equalTo(self).inset(UIEdgeInsetsMake(UIConstants.DefaultPadding, UIConstants.DefaultPadding, UIConstants.DefaultPadding, UIConstants.DefaultPadding))
         }
 
         if let img = imageView.image {
-            imageView.snp_remakeConstraints { make in
+            imageView.snp.remakeConstraints { make in
                 make.left.centerY.equalTo(contentView)
                 // To avoid doubling the padding, the textview doesn't have an inset on its left side.
                 // Instead, it relies on the imageView to tell it where its left side should be.
@@ -200,23 +190,23 @@ class SnackBar: UIView {
                 make.height.equalTo(img.size.height + UIConstants.DefaultPadding)
             }
         } else {
-            imageView.snp_remakeConstraints { make in
+            imageView.snp.remakeConstraints { make in
                 make.width.height.equalTo(0)
                 make.top.left.equalTo(self)
-                make.bottom.lessThanOrEqualTo(contentView.snp_bottom)
+                make.bottom.lessThanOrEqualTo(contentView.snp.bottom)
             }
         }
 
-        textLabel.snp_remakeConstraints { make in
+        textLabel.snp.remakeConstraints { make in
             make.top.equalTo(contentView)
-            make.left.equalTo(self.imageView.snp_right)
+            make.left.equalTo(self.imageView.snp.right)
             make.trailing.equalTo(contentView)
-            make.bottom.lessThanOrEqualTo(contentView.snp_bottom)
+            make.bottom.lessThanOrEqualTo(contentView.snp.bottom)
         }
 
-        buttonsView.snp_remakeConstraints { make in
-            make.top.equalTo(contentView.snp_bottom).offset(UIConstants.DefaultPadding)
-            make.bottom.equalTo(self.snp_bottom)
+        buttonsView.snp.remakeConstraints { make in
+            make.top.equalTo(contentView.snp.bottom).offset(UIConstants.DefaultPadding)
+            make.bottom.equalTo(self.snp.bottom)
             make.left.right.equalTo(self)
             if self.buttonsView.subviews.count > 0 {
                 make.height.equalTo(UIConstants.SnackbarButtonHeight)
@@ -235,7 +225,7 @@ class SnackBar: UIView {
      */
     func show() {
         alpha = 1
-        bottom?.updateOffset(amount: 0)
+        bottom?.update(offset: 0)
     }
 
     /**
@@ -247,7 +237,7 @@ class SnackBar: UIView {
         if h == 0 {
             h = UIConstants.ToolbarHeight
         }
-        bottom?.updateOffset(amount: h)
+        bottom?.update(offset: h)
     }
 
     fileprivate func addButton(_ snackButton: SnackButton) {
