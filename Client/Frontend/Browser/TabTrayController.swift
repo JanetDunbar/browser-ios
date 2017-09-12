@@ -8,6 +8,7 @@ import SnapKit
 import Storage
 import ReadingList
 import Shared
+import CoreData
 
 struct TabTrayControllerUX {
     static let CornerRadius = BraveUX.TabTrayCellCornerRadius
@@ -268,7 +269,7 @@ class TabTrayController: UIViewController {
         let button = UIButton()
         button.setTitle(Strings.Private, for: .normal)
         button.setTitleColor(UIColor.black, for: .normal)
-        button.titleLabel!.font = UIFont.systemFont(ofSize: button.titleLabel!.font.pointSize + 2, weight: UIFontWeightMedium)
+        button.titleLabel!.font = UIFont.systemFont(ofSize: button.titleLabel!.font.pointSize + 1, weight: UIFontWeightMedium)
         button.contentEdgeInsets = UIEdgeInsetsMake(0, 4 /* left */, 0, 4 /* right */)
         button.layer.cornerRadius = 4.0
         button.addTarget(self, action: #selector(TabTrayController.SELdidTogglePrivateMode), for: .touchUpInside)
@@ -276,6 +277,19 @@ class TabTrayController: UIViewController {
         button.accessibilityHint = PrivateModeStrings.toggleAccessibilityHint
         button.accessibilityIdentifier = "TabTrayController.togglePrivateMode"
 
+        return button
+    }()
+    
+    lazy var doneButton: UIButton = {
+        let button = UIButton()
+        button.setTitle(Strings.Done, for: .normal)
+        button.setTitleColor(UIColor(rgb: 0x666666), for: .normal)
+        button.titleLabel!.font = UIFont.systemFont(ofSize: button.titleLabel!.font.pointSize + 1, weight: UIFontWeightRegular)
+        button.contentEdgeInsets = UIEdgeInsetsMake(0, 4 /* left */, 0, 4 /* right */)
+        button.layer.cornerRadius = 4.0
+        button.addTarget(self, action: #selector(TabTrayController.SELdidTapDoneButton), for: .touchUpInside)
+        button.accessibilityIdentifier = "TabTrayController.doneButton"
+        
         return button
     }()
     
@@ -374,8 +388,11 @@ class TabTrayController: UIViewController {
         // Background view created for tapping background closure
         collectionView.backgroundView = UIView()
         collectionView.backgroundView?.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(TabTrayController.onTappedBackground(_:))))
+        
+        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongGesture(gesture:)))
+        collectionView.addGestureRecognizer(longPressGesture)
 
-        viewsToAnimate = [blurBackdropView, collectionView, addTabButton, togglePrivateMode]
+        viewsToAnimate = [blurBackdropView, collectionView, addTabButton, togglePrivateMode, doneButton]
         viewsToAnimate.forEach {
             $0.alpha = 0.0
             view.addSubview($0)
@@ -402,6 +419,22 @@ class TabTrayController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(TabTrayController.SELappDidBecomeActiveNotification), name: NSNotification.Name.UIApplicationDidBecomeActive, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(TabTrayController.SELDynamicFontChanged(_:)), name: NotificationDynamicFontChanged, object: nil)
     }
+    
+    func handleLongGesture(gesture: UILongPressGestureRecognizer) {
+        switch(gesture.state) {
+        case UIGestureRecognizerState.began:
+            guard let selectedIndexPath = self.collectionView.indexPathForItem(at: gesture.location(in: self.collectionView)) else {
+                break
+            }
+            collectionView.beginInteractiveMovementForItem(at: selectedIndexPath)
+        case UIGestureRecognizerState.changed:
+            collectionView.updateInteractiveMovementTargetPosition(gesture.location(in: gesture.view!))
+        case UIGestureRecognizerState.ended:
+            collectionView.endInteractiveMovement()
+        default:
+            collectionView.cancelInteractiveMovement()
+        }
+    }
 
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
@@ -427,20 +460,26 @@ class TabTrayController: UIViewController {
 
     fileprivate func makeConstraints() {
         
+        doneButton.snp.makeConstraints { make in
+            make.right.equalTo(self.view).offset(-30)
+            make.centerY.equalTo(self.addTabButton.snp.centerY)
+        }
+        
         togglePrivateMode.snp.makeConstraints { make in
-            make.right.equalTo(addTabButton.snp.left).offset(-10)
+            make.left.equalTo(30)
             make.centerY.equalTo(self.addTabButton.snp.centerY)
         }
 
         addTabButton.snp.makeConstraints { make in
-            make.trailing.equalTo(self.view)
-            make.top.equalTo(self.topLayoutGuide.snp.bottom)
+            make.bottom.equalTo(self.view)
+            make.centerX.equalTo(self.view)
             make.size.equalTo(UIConstants.ToolbarHeight)
         }
 
         collectionView.snp.makeConstraints { make in
-            make.top.equalTo(addTabButton.snp.bottom)
-            make.left.right.bottom.equalTo(self.view)
+            make.bottom.equalTo(addTabButton.snp.top)
+            make.top.equalTo(20)
+            make.left.right.equalTo(self.view)
         }
         
         blurBackdropView.snp.makeConstraints { (make) in
@@ -450,39 +489,16 @@ class TabTrayController: UIViewController {
     
     // View we display when there are no private tabs created
     fileprivate func newEmptyPrivateTabsView() -> UIView {
-        let titleLabel = UILabel()
-        titleLabel.textColor = EmptyPrivateTabsViewUX.TitleColor
-        titleLabel.font = EmptyPrivateTabsViewUX.TitleFont
-        titleLabel.textAlignment = NSTextAlignment.center
-        
-        let descriptionLabel = UILabel()
-        descriptionLabel.textColor = EmptyPrivateTabsViewUX.DescriptionColor
-        descriptionLabel.font = EmptyPrivateTabsViewUX.DescriptionFont
-        descriptionLabel.textAlignment = NSTextAlignment.center
-        descriptionLabel.numberOfLines = 0
-        descriptionLabel.preferredMaxLayoutWidth = EmptyPrivateTabsViewUX.MaxDescriptionWidth
-        
         let emptyView = UIView()
         emptyView.backgroundColor = UIColor.black.withAlphaComponent(0.6)
-        
-        titleLabel.text = Strings.Private_Browsing
-        descriptionLabel.text = Strings.Brave_wont_remember_any_of_your_history
-        
-        emptyView.addSubview(titleLabel)
-        emptyView.addSubview(descriptionLabel)
-        
-        titleLabel.snp.makeConstraints { make in
-            make.center.equalTo(emptyView)
-        }
-        
-        descriptionLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(EmptyPrivateTabsViewUX.TextMargin)
-            make.centerX.equalTo(emptyView)
-        }
         return emptyView
     }
 
 // MARK: Selectors
+    
+    func SELdidTapDoneButton() {
+        self.dismiss(animated: true, completion: nil)
+    }
 
     func SELdidClickAddTab() {
         openNewTab()
@@ -533,6 +549,10 @@ class TabTrayController: UIViewController {
             if fromView != self.emptyPrivateTabsView {
                 fromView.removeFromSuperview()
             }
+            
+            if self.privateMode {
+                self.openNewTab()
+            }
         }
     }
 
@@ -560,9 +580,9 @@ class TabTrayController: UIViewController {
         self.collectionView.performBatchUpdates({ _ in
             // TODO: This logic seems kind of finicky
             var tab: Browser?
-            let tabID = TabMO.freshTab()
-            tab = self.tabManager.addTab(request, id: tabID)
-            tab?.tabID = tabID
+            let id = TabMO.freshTab().syncUUID
+            tab = self.tabManager.addTab(request, id: id)
+            tab?.tabID = id
             
             if let tab = tab {
                 self.tabManager.selectTab(tab)
@@ -697,7 +717,7 @@ extension TabTrayController: UIScrollViewAccessibilityDelegate {
 
 fileprivate func removeTabUtil(_ tabManager: TabManager, tab: Browser) {
     let isAlwaysPrivate = getApp().profile?.prefs.boolForKey(kPrefKeyPrivateBrowsingAlwaysOn) ?? false
-    let createIfNone =  isAlwaysPrivate ? true : !PrivateBrowsing.singleton.isOn
+    let createIfNone =  true
     tabManager.removeTab(tab, createTabIfNoneLeft: createIfNone)
 }
 
@@ -775,9 +795,9 @@ fileprivate class TabManagerDataSource: NSObject, UICollectionViewDataSource {
             tabCell.favicon.image = nil
         }
         
-        tabCell.background.image = tab.screenshot.image
-        tab.screenshot.listenerImages.removeAll() // TODO maybe UIImageWithNotify should only ever have one listener?
-        tab.screenshot.listenerImages.append(UIImageWithNotify.WeakImageView(tabCell.background))
+        tab.screenshot(callback: { (image) in
+            tabCell.background.image = image
+        })
 
         // TODO: Move most view logic here instead of `init` or `prepareForReuse`
         // If the current tab add heightlighting
@@ -805,6 +825,26 @@ fileprivate class TabManagerDataSource: NSObject, UICollectionViewDataSource {
 
     @objc func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return tabList.count()
+    }
+    
+    @objc func collectionView(_ collectionView: UICollectionView, canMoveItemAt indexPath: IndexPath) -> Bool {
+        return true
+    }
+    
+    @objc func collectionView(_ collectionView: UICollectionView, moveItemAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
+        guard let tab = tabList.at(sourceIndexPath.row) else { return }
+        
+        // Find original from/to index... we need to target the full list not partial.
+        guard let tabManager = getApp().tabManager else { return }
+        guard let from = tabManager.tabs.tabs.index(where: {$0 === tab}) else { return }
+        
+        let toTab = tabList.at(destinationIndexPath.row)
+        guard let to = tabManager.tabs.tabs.index(where: {$0 === toTab}) else { return }
+        
+        tabManager.move(tab: tab, from: from, to: to)
+        
+        updateData()
+        NotificationCenter.default.post(name: kRearangeTabNotification, object: nil)
     }
 }
 

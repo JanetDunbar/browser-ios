@@ -72,7 +72,7 @@ extension BrowserViewController: TabManagerDelegate {
             } else {
                 // The web view can go gray if it was zombified due to memory pressure.
                 // When this happens, the URL is nil, so try restoring the page upon selection.
-                 tab.reload()
+                tab.reload()
             }
         }
 
@@ -93,11 +93,6 @@ extension BrowserViewController: TabManagerDelegate {
 
         if let readerMode = selected?.getHelper(ReaderMode.self) {
             urlBar.updateReaderModeState(readerMode.state)
-            if readerMode.state == .Active {
-                showReaderModeBar(animated: false)
-            } else {
-                hideReaderModeBar(animated: false)
-            }
         } else {
             urlBar.updateReaderModeState(ReaderModeState.Unavailable)
         }

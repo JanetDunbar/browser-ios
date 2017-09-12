@@ -45,7 +45,6 @@ class BrowserViewController: UIViewController {
     var homePanelController: HomePanelViewController?
     var webViewContainer: UIView!
     var urlBar: URLBarView!
-    var readerModeBar: ReaderModeBarView?
     var readerModeCache: ReaderModeCache
     var statusBarOverlay: UIView!
     fileprivate(set) var toolbar: BraveBrowserBottomToolbar?
@@ -69,7 +68,7 @@ class BrowserViewController: UIViewController {
     var pasteAction: AccessibleAction!
     var copyAddressAction: AccessibleAction!
 
-    weak var tabTrayController: TabTrayController!
+    weak var tabTrayController: TabTrayController?
 
     let profile: Profile
     let tabManager: TabManager
@@ -190,7 +189,7 @@ class BrowserViewController: UIViewController {
             footerBackground?.addSubview(toolbar!)
             footer.addSubview(footerBackground!)
             
-            footer.layer.shadowOffset = CGSize(width: 0, height: -1)
+            footer.layer.shadowOffset = CGSize(width: 0, height: -0.5)
             footer.layer.shadowColor = UIConstants.BorderColor.cgColor
             footer.layer.shadowRadius = 0
             footer.layer.shadowOpacity = 1.0
@@ -297,12 +296,12 @@ class BrowserViewController: UIViewController {
 
         log.debug("BVC adding footer and header…")
         footerBackdrop = UIView()
-        footerBackdrop.backgroundColor = UIColor.white
+        footerBackdrop.backgroundColor = BrowserViewControllerUX.BackgroundColor
         view.addSubview(footerBackdrop)
 
         log.debug("BVC setting up webViewContainer…")
         webViewContainerBackdrop = UIView()
-        webViewContainerBackdrop.backgroundColor = UIColor.gray
+        webViewContainerBackdrop.backgroundColor = BrowserViewControllerUX.BackgroundColor
         webViewContainerBackdrop.alpha = 0
         view.addSubview(webViewContainerBackdrop)
 
@@ -536,10 +535,7 @@ class BrowserViewController: UIViewController {
         // animate and reset transform for browser chrome
         urlBar.updateAlphaForSubviews(1)
 
-        [header,
-            footer,
-            readerModeBar,
-            footerBackdrop].forEach { view in
+        [header, footer, footerBackdrop].forEach { view in
                 view?.transform = CGAffineTransform.identity
         }
     }
@@ -550,12 +546,6 @@ class BrowserViewController: UIViewController {
         topTouchArea.snp.remakeConstraints { make in
             make.top.left.right.equalTo(self.view)
             make.height.equalTo(BrowserViewControllerUX.ShowHeaderTapAreaHeight)
-        }
-
-        readerModeBar?.snp.remakeConstraints { make in
-            make.top.equalTo(self.header.snp.bottom).constraint
-            make.height.equalTo(BraveUX.ReaderModeBarHeight)
-            make.leading.trailing.equalTo(self.view)
         }
 
         footer.snp.remakeConstraints { make in
@@ -663,11 +653,6 @@ class BrowserViewController: UIViewController {
             homePanel.removeFromParentViewController()
             self.webViewContainer.accessibilityElementsHidden = false
             UIAccessibilityPostNotification(UIAccessibilityScreenChangedNotification, nil)
-
-            // Refresh the reading view toolbar since the article record may have changed
-            if let readerMode = self.tabManager.selectedTab?.getHelper(ReaderMode.self), readerMode.state == .Active {
-                self.showReaderModeBar(animated: false)
-            }
         }
     }
 
@@ -731,14 +716,6 @@ class BrowserViewController: UIViewController {
     func updateUIForReaderHomeStateForTab(_ tab: Browser) {
         updateURLBarDisplayURL(tab: tab)
         updateInContentHomePanel(tab.url)
-
-        if let url = tab.url {
-            if ReaderModeUtils.isReaderModeURL(url) {
-                showReaderModeBar(animated: false)
-            } else {
-                hideReaderModeBar(animated: false)
-            }
-        }
     }
 
     fileprivate func isWhitelistedUrl(_ url: URL) -> Bool {
@@ -886,7 +863,6 @@ class BrowserViewController: UIViewController {
                 // We don't know what share action the user has chosen so we simply always
                 // update the toolbar and reader mode bar to reflect the latest status.
                 self.updateURLBarDisplayURL(tab: tab)
-                self.updateReaderModeBar()
             }
         })
 
@@ -1028,7 +1004,6 @@ extension BrowserViewController: ReaderModeDelegate {
     }
 
     func readerMode(_ readerMode: ReaderMode, didDisplayReaderizedContentForBrowser browser: Browser) {
-        self.showReaderModeBar(animated: true)
         browser.showContent(true)
     }
 

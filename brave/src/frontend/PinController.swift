@@ -21,9 +21,9 @@ struct PinUX {
         }
     }
     fileprivate static let DefaultForegroundColor = UIColor(rgb: 0x4a4a4a)
-    fileprivate static let DefaultBackgroundColor = UIColor.clear
+    fileprivate static let DefaultBackgroundColor = UIColor(rgb: 0x4a4a4a).withAlphaComponent(0.1)
     fileprivate static let SelectedBackgroundColor = BraveUX.BraveOrange
-    fileprivate static let DefaultBorderWidth: CGFloat = 1.0
+    fileprivate static let DefaultBorderWidth: CGFloat = 0.0
     fileprivate static let SelectedBorderWidth: CGFloat = 0.0
     fileprivate static let DefaultBorderColor = UIColor(rgb: 0x4a4a4a).cgColor
     fileprivate static let IndicatorSize: CGSize = CGSize(width: 14, height: 14)
@@ -372,6 +372,7 @@ class PinIndicatorView: UIView {
             view.layer.masksToBounds = true
             view.layer.borderWidth = 1
             view.layer.borderColor = defaultColor.cgColor
+            view.backgroundColor = PinUX.DefaultBackgroundColor
             addSubview(view)
             indicators.append(view)
         }
@@ -422,7 +423,7 @@ class PinIndicatorView: UIView {
                 let view = indicators[i]
                 view.layer.borderWidth = PinUX.DefaultBorderWidth
                 view.layer.borderColor = PinUX.DefaultBorderColor
-                view.backgroundColor = UIColor.clear
+                view.backgroundColor = PinUX.DefaultBackgroundColor
             }
         }
         
@@ -443,7 +444,7 @@ class PinButton: UIControl {
         layer.masksToBounds = true
         layer.borderWidth = PinUX.DefaultBorderWidth
         layer.borderColor = PinUX.DefaultBorderColor
-        backgroundColor = UIColor.clear
+        backgroundColor = PinUX.DefaultBackgroundColor
         
         titleLabel = UILabel(frame: frame)
         titleLabel.isUserInteractionEnabled = false
@@ -467,7 +468,7 @@ class PinButton: UIControl {
                 layer.borderColor = PinUX.SelectedBackgroundColor.cgColor
             }
             else {
-                backgroundColor = UIColor.clear
+                backgroundColor = PinUX.DefaultBackgroundColor
                 titleLabel.textColor = PinUX.DefaultForegroundColor
                 layer.borderColor = PinUX.DefaultBorderColor
             }

@@ -4,7 +4,6 @@
 
 import Foundation
 import Shared
-import SwiftyJSON
 
 import SwiftKeychainWrapper
 import LocalAuthentication
@@ -260,26 +259,23 @@ class PrivacyPolicySetting: Setting {
     }
 }
 
-class DebugSettings: Setting, XMLParserDelegate {
+class ChangePinSetting: Setting {
+    let profile: Profile
     
-    override var title: NSAttributedString? {
-        return NSAttributedString(string: "Load All QA Tabs", attributes: [NSForegroundColorAttributeName: UIConstants.TableViewRowTextColor])
+    override var accessoryType: UITableViewCellAccessoryType { return .disclosureIndicator }
+    
+    override var accessibilityIdentifier: String? { return "ChangePin" }
+    
+    init(settings: SettingsTableViewController) {
+        self.profile = settings.profile
+        
+        let clearTitle = Strings.Change_Pin
+        super.init(title: NSAttributedString(string: clearTitle, attributes: [NSForegroundColorAttributeName: UIConstants.TableViewRowTextColor]))
     }
     
     override func onClick(_ navigationController: UINavigationController?) {
-        
-        navigationController?.dismiss(animated: true) {
-            getApp().braveTopViewController.togglePanel(getApp().braveTopViewController.mainSidePanel)
-        }
-        
-        let url = URL(string: "https://raw.githubusercontent.com/brave/qa-resources/master/testlinks.json")!
-        let string = try? String(contentsOf: url)
-        let urls = JSON(parseJSON: string!)["links"].arrayValue.flatMap { URL(string: $0.stringValue) }
-        for url in urls {
-            let request = URLRequest(url: url)
-            let new = getApp().tabManager.addTab(request)
-            getApp().tabManager.selectTab(new)
-        }
+        let view = PinViewController()
+        navigationController?.pushViewController(view, animated: true)
     }
 }
 
