@@ -66,7 +66,7 @@ private extension TrayToBrowserAnimator {
         bvc.urlBar.isTransitioning = true
 
         // Re-calculate the starting transforms for header/footer views in case we switch orientation
-        resetTransformsForViews([bvc.header, bvc.readerModeBar, bvc.footer, bvc.footerBackdrop])
+        resetTransformsForViews([bvc.header, bvc.footer, bvc.footerBackdrop])
         transformHeaderFooterForBVC(bvc, toFrame: startingFrame, container: container)
 
         UIView.animate(withDuration: self.transitionDuration(using: transitionContext),
@@ -214,7 +214,6 @@ private func transformHeaderFooterForBVC(_ bvc: BrowserViewController, toFrame f
     bvc.footer.transform = footerForTransform
     bvc.footerBackdrop.transform = footerForTransform
     bvc.header.transform = headerForTransform
-    bvc.readerModeBar?.transform = headerForTransform
 }
 
 private func footerTransform( _ frame: CGRect, toFrame finalFrame: CGRect, container: UIView) -> CGAffineTransform {
@@ -300,7 +299,9 @@ private func transformToolbarsToFrame(_ toolbars: [UIView?], toRect endRect: CGR
 
 private func createTransitionCellFromBrowser(_ browser: Browser?, withFrame frame: CGRect) -> TabCell {
     let cell = TabCell(frame: frame)
-    cell.background.image = browser?.screenshot.image
+    browser?.screenshot(callback: { (image) in
+        cell.background.image = image
+    })
     cell.titleLbl.text = browser?.displayTitle
 
     if let favIcon = browser?.displayFavicon {

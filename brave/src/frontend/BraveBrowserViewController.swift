@@ -111,7 +111,6 @@ class BraveBrowserViewController : BrowserViewController {
             heightConstraint = make.height.equalTo(self.view.snp.height).constraint
             webViewContainerTopOffset = make.top.equalTo(self.statusBarOverlay.snp.bottom).offset(BraveURLBarView.CurrentHeight).constraint
         }
-
     }
 
     override func updateViewConstraints() {
